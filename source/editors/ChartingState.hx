@@ -12,6 +12,7 @@ import Section.SwagSection;
 import Song.SwagSong;
 import flixel.FlxG;
 import flixel.FlxObject;
+import objects.Cursor;
 import flixel.FlxSprite;
 import flixel.addons.display.FlxGridOverlay;
 import flixel.addons.transition.FlxTransitionableState;
@@ -163,6 +164,11 @@ class ChartingState extends MusicBeatState
 	var value1InputText:FlxUIInputText;
 	var value2InputText:FlxUIInputText;
 	var currentSongName:String;
+	var tab_group_note:FlxUI;
+	var tab_group_event:FlxUI;
+	var tab_group_song:FlxUI;
+	var tab_group_section:FlxUI;
+	var tab_group_chart:FlxUI;
 
 	var zoomTxt:FlxText;
 
@@ -326,7 +332,7 @@ class ChartingState extends MusicBeatState
 
 		if(curSec >= _song.notes.length) curSec = _song.notes.length - 1;
 
-		FlxG.mouse.visible = true;
+		Cursor.show();
 		//FlxG.save.bind('funkin', CoolUtil.getSavePath());
 
 		tempBpm = _song.bpm;
@@ -401,6 +407,7 @@ class ChartingState extends MusicBeatState
 		\nHold Control and click on an arrow to select it
 		\nZ/X - Zoom in/out
 		\n
+		\nright click to remove notes/events. left click to place
 		\nEsc - Test your chart inside Chart Editor
 		\nEnter - Play your chart
 		\nQ/E - Decrease/Increase Note Sustain Length
@@ -453,9 +460,9 @@ class ChartingState extends MusicBeatState
 	var playSoundBf:FlxUICheckBox = null;
 	var playSoundDad:FlxUICheckBox = null;
 	var UI_songTitle:FlxUIInputText;
-	var noteSkinInputText:FlxUIInputText;
+
 	var hudSkinInputText:FlxUIInputText;
-	var noteSplashesInputText:FlxUIInputText;
+
 	var stageDropDown:FlxUIDropDownMenuCustom;
 	#if FLX_PITCH
 	var sliderRate:FlxUISlider;
@@ -651,25 +658,21 @@ class ChartingState extends MusicBeatState
 
 		var skin = PlayState.SONG.arrowSkin;
 		if(skin == null) skin = '';
-		noteSkinInputText = new FlxUIInputText(player2DropDown.x, player2DropDown.y + 50, 150, skin, 8);
-		blockPressWhileTypingOn.push(noteSkinInputText);
+		
 		
 		
 
-		noteSplashesInputText = new FlxUIInputText(noteSkinInputText.x, noteSkinInputText.y + 35, 150, _song.splashSkin, 8);
-		blockPressWhileTypingOn.push(noteSplashesInputText);
 
 		var hudskin = PlayState.SONG.hudSkin;
-		hudSkinInputText = new FlxUIInputText(noteSplashesInputText.x, noteSplashesInputText.y + 50, 150, hudskin, 8);
+		hudSkinInputText = new FlxUIInputText(player2DropDown.x, player2DropDown.y + 50, 150, hudskin, 8);
 		blockPressWhileTypingOn.push(hudSkinInputText);
 
-		var reloadNotesButton:FlxButton = new FlxButton(noteSplashesInputText.x + 5, noteSplashesInputText.y + 20, 'Change Notes', function() {
-			_song.arrowSkin = noteSkinInputText.text;
+		var reloadNotesButton:FlxButton = new FlxButton(hudSkinInputText.x + 5, hudSkinInputText.y + 20, 'Change Notes', function() {
 			_song.hudSkin = hudSkinInputText.text;
 			updateGrid();
 		});
 
-		var tab_group_song = new FlxUI(null, UI_box);
+		tab_group_song = new FlxUI(null, UI_box);
 		tab_group_song.name = "Song";
 		tab_group_song.add(UI_songTitle);
 
@@ -685,9 +688,7 @@ class ChartingState extends MusicBeatState
 		tab_group_song.add(stepperBPM);
 		tab_group_song.add(stepperSpeed);
 		tab_group_song.add(reloadNotesButton);
-		tab_group_song.add(noteSkinInputText);
 		tab_group_song.add(hudSkinInputText);
-		tab_group_song.add(noteSplashesInputText);
 		tab_group_song.add(new FlxText(stepperBPM.x, stepperBPM.y - 15, 0, 'Song BPM:'));
 		tab_group_song.add(new FlxText(stepperBPM.x + 100, stepperBPM.y - 15, 0, 'Song Offset:'));
 		tab_group_song.add(new FlxText(stepperSpeed.x, stepperSpeed.y - 15, 0, 'Song Speed:'));
@@ -695,9 +696,9 @@ class ChartingState extends MusicBeatState
 		tab_group_song.add(new FlxText(gfVersionDropDown.x, gfVersionDropDown.y - 15, 0, 'Girlfriend:'));
 		tab_group_song.add(new FlxText(player1DropDown.x, player1DropDown.y - 15, 0, 'Boyfriend:'));
 		tab_group_song.add(new FlxText(stageDropDown.x, stageDropDown.y - 15, 0, 'Stage:'));
-		tab_group_song.add(new FlxText(noteSkinInputText.x, noteSkinInputText.y - 15, 0, 'Note Texture:'));
+
 		tab_group_song.add(new FlxText(hudSkinInputText.x, hudSkinInputText.y - 15, 0, 'Hud Texture:'));
-		tab_group_song.add(new FlxText(noteSplashesInputText.x, noteSplashesInputText.y - 15, 0, 'Note Splashes Texture:'));
+
 		tab_group_song.add(player2DropDown);
 		tab_group_song.add(gfVersionDropDown);
 		tab_group_song.add(player1DropDown);
@@ -720,7 +721,7 @@ class ChartingState extends MusicBeatState
 
 	function addSectionUI():Void
 	{
-		var tab_group_section = new FlxUI(null, UI_box);
+		tab_group_section = new FlxUI(null, UI_box);
 		tab_group_section.name = 'Section';
 
 		check_mustHitSection = new FlxUICheckBox(10, 15, null, null, "Must hit section", 100);
@@ -735,7 +736,7 @@ class ChartingState extends MusicBeatState
 		check_altAnim = new FlxUICheckBox(check_gfSection.x + 120, check_gfSection.y, null, null, "Alt Animation", 100);
 		check_altAnim.checked = _song.notes[curSec].altAnim;
 
-		stepperBeats = new FlxUINumericStepper(10, 100, 1, 4, 1, 6, 2);
+		stepperBeats = new FlxUINumericStepper(10, 100, 1, 4, 1, 80, 2);
 		stepperBeats.value = getSectionBeats();
 		stepperBeats.name = 'section_beats';
 		blockPressWhileTypingOnStepper.push(stepperBeats);
@@ -985,7 +986,7 @@ class ChartingState extends MusicBeatState
 
 	function addNoteUI():Void
 	{
-		var tab_group_note = new FlxUI(null, UI_box);
+		tab_group_note = new FlxUI(null, UI_box);
 		tab_group_note.name = 'Note';
 
 		stepperSusLength = new FlxUINumericStepper(10, 25, Conductor.stepCrochet / 2, 0, 0, Conductor.stepCrochet * 64);
@@ -1072,7 +1073,7 @@ class ChartingState extends MusicBeatState
 	var selectedEventText:FlxText;
 	function addEventsUI():Void
 	{
-		var tab_group_event = new FlxUI(null, UI_box);
+		tab_group_event = new FlxUI(null, UI_box);
 		tab_group_event.name = 'Events';
 
 		#if LUA_ALLOWED
@@ -1258,7 +1259,7 @@ class ChartingState extends MusicBeatState
 	var instVolume:FlxUINumericStepper;
 	var voicesVolume:FlxUINumericStepper;
 	function addChartingUI() {
-		var tab_group_chart = new FlxUI(null, UI_box);
+		tab_group_chart = new FlxUI(null, UI_box);
 		
 		tab_group_chart.name = 'Charting';
 
@@ -1565,10 +1566,7 @@ class ChartingState extends MusicBeatState
 			}
 		}
 		else if(id == FlxUIInputText.CHANGE_EVENT && (sender is FlxUIInputText)) {
-			if(sender == noteSplashesInputText) {
-				_song.splashSkin = noteSplashesInputText.text;
-			}
-			else if(curSelectedNote != null)
+			if(curSelectedNote != null)
 			{
 				if(sender == value1InputText) {
 					if(curSelectedNote[1][curEventSelected] != null)
@@ -1647,7 +1645,7 @@ class ChartingState extends MusicBeatState
 			strumLineNotes.members[i].y = strumLine.y;
 		}
 
-		FlxG.mouse.visible = true;//cause reasons. trust me
+		Cursor.show();
 		camPos.y = strumLine.y;
 		if(!disableAutoScrolling.checked) {
 			if (Math.ceil(strumLine.y) >= gridBG.height)
@@ -1683,15 +1681,31 @@ class ChartingState extends MusicBeatState
 		} else {
 			dummyArrow.visible = false;
 		}
+		if(FlxG.mouse.justPressedRight){
+			if (FlxG.mouse.overlaps(curRenderedNotes))
+			{
+				
+				curRenderedNotes.forEachAlive(function(note:Note)
+				{
+					if (FlxG.mouse.overlaps(note))
+					{
+						deleteNote(note);
+					}
+				});
+			}
+
+		}
 
 		if (FlxG.mouse.justPressed)
 		{
 			if (FlxG.mouse.overlaps(curRenderedNotes))
 			{
+				
 				curRenderedNotes.forEachAlive(function(note:Note)
 				{
 					if (FlxG.mouse.overlaps(note))
 					{
+						
 						if (FlxG.keys.pressed.CONTROL)
 						{
 							selectNote(note);
@@ -1702,11 +1716,7 @@ class ChartingState extends MusicBeatState
 							curSelectedNote[3] = noteTypeIntMap.get(currentType);
 							updateGrid();
 						}
-						else
-						{
-							//trace('tryin to delete note...');
-							deleteNote(note);
-						}
+						
 					}
 				});
 			}
@@ -1722,6 +1732,7 @@ class ChartingState extends MusicBeatState
 				}
 			}
 		}
+		doCursorlogic();
 
 		var blockInput:Bool = false;
 		for (inputText in blockPressWhileTypingOn) {
@@ -2530,6 +2541,114 @@ class ChartingState extends MusicBeatState
 		updateGrid();
 	}
 
+	function doCursorlogic(){
+
+
+		
+		for(item in tab_group_note.members){
+			if(UI_box.selected_tab ==2){
+				if (FlxG.mouse.overlaps(item))
+					{
+						
+						
+						if (!Std.isOfType(item, FlxText)) {
+							Cursor.set_cursorMode(Pointer);
+					 	}
+
+					}
+				
+				}
+			
+
+		}
+		for(item in tab_group_song.members){
+			if(UI_box.selected_tab ==4){
+				
+
+				if (FlxG.mouse.overlaps(item))
+				{
+					 if (Std.isOfType(item, FlxUIInputText)) {
+						Cursor.set_cursorMode(Text);
+					 }
+					 else{
+						if (!Std.isOfType(item, FlxText)) {
+							Cursor.set_cursorMode(Pointer);
+					 	}
+					 }
+
+					
+
+				}
+			}
+			
+
+		}
+		for(item in tab_group_event.members){
+			if(UI_box.selected_tab ==1){
+				if (FlxG.mouse.overlaps(item))
+				{
+
+					if (!Std.isOfType(item, FlxText)) {
+							Cursor.set_cursorMode(Pointer);
+					 	}
+
+				}
+
+			}
+			
+
+		}
+		for(item in tab_group_section.members){
+			if(UI_box.selected_tab ==3){
+				if (FlxG.mouse.overlaps(item))
+				{
+
+					if (!Std.isOfType(item, FlxText)) {
+							Cursor.set_cursorMode(Pointer);
+					 	}
+
+				}
+
+			}
+			
+
+		}
+		for(item in tab_group_chart.members){
+			if(UI_box.selected_tab ==0){
+				if (FlxG.mouse.overlaps(item))
+				{
+
+
+					
+					if (Std.isOfType(item, FlxUISlider) && FlxG.mouse.pressed ) {
+						Cursor.set_cursorMode(Grabbing);
+					}
+					else{
+						if (!Std.isOfType(item, FlxText)) {
+							Cursor.set_cursorMode(Pointer);
+					 	}
+					}
+
+				}
+
+			}
+			
+
+		}
+		
+		if (FlxG.mouse.overlaps(gridBG))
+			{
+
+				Cursor.set_cursorMode(Cell);
+
+			}
+		if (FlxG.mouse.overlaps(curRenderedNotes))
+			{
+
+				Cursor.set_cursorMode(Pointer);
+
+			}
+	}
 	function recalculateSteps(add:Float = 0):Int
 	{
 		var lastChange:BPMChangeEvent = {

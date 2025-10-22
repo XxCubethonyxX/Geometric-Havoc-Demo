@@ -9,17 +9,15 @@ import flixel.text.FlxText;
 import lime.app.Application;
 import lime.ui.WindowAttributes;
 import flixel.FlxState;
-import flixel.FlxBasic;
 import PlayState;
-import flixel.FlxCamera;
 import hscript.Interp;
 import hscript.Macro;
 import flixel.util.FlxColor;
 import flixel.addons.display.FlxBackdrop;
 import hscript.Parser;
-import flixel.group.FlxGroup;
 import flixel.tweens.FlxTween;
 import openfl.display.BlendMode;
+import flixel.input.keyboard.FlxKey;
 import flixel.tweens.FlxEase;
 import scriptobjects.*;
 
@@ -30,6 +28,7 @@ using StringTools;
 //curently this is just me and NoclueBros hscript interpreter -kuru
 class HaxeScript {
     public var interpreter:Interp;
+	public static var imports:Array<{original:String, alias:String}> = [];
     public var parser:Parser;
     public var onError:(Dynamic, String, String)->Void = null;
     public var filePath:String = '';
@@ -52,15 +51,26 @@ class HaxeScript {
     }
 
     public function new(code:String, obj:Dynamic,runautocreate:Bool) {
-        interpreter = new Interp();
-        parser = new Parser();
+
+        
+        var processed = preprocess(code, imports);
+		
+
+	
+        var parser = new Parser();
+    
 
         this.obj = obj;
         parser.resumeErrors = true;
         parser.allowTypes = true;
+
+		var expr = parser.parseString(processed);
+		interpreter = new Interp();
+
+
          
         __default_stuff(this);
-        interpreter.execute(parser.parseString(code));
+        interpreter.execute(expr);
         if(runautocreate){
             this.runFunction('onCreate', []);
         }
@@ -92,6 +102,66 @@ class HaxeScript {
         return interpreter.variables[id];
     }
 
+
+	
+
+static function preprocess(script:String, imports:Array<{original:String, alias:String}>):String {
+    var lines = script.split("\n");
+    var out = new Array<String>();
+
+    for (l in lines) {
+        var trimmed = l.trim();
+        
+        if (StringTools.startsWith(trimmed, "import ")) {
+            var classname = trimmed.substr(7).split(";")[0].trim();
+
+            var alias:String = null;
+            var original:String = null;
+
+            if (classname.indexOf(" as ") != -1) {
+                var parts = classname.split(" as ");
+                original = parts[0].trim();
+                alias = parts[1].trim();
+            } else {
+                original = classname;
+                alias = classname.split(".").pop();
+            }
+
+            imports.push({ original: original, alias: alias });
+
+            
+            out.push(""); 
+
+        } else {
+            
+            out.push(l);
+        }
+    }
+
+    return out.join("\n");
+}
+
+
+
+
+
+	static function registerImports(script:HaxeScript, imports:Array<{ original:String, alias:String }>) {
+		for (imp in imports) {
+			var classname = imp.original;
+			var alias = imp.alias;
+
+			var cls = Type.resolveClass(classname);
+
+			if (cls == null) {
+				trace('Warning: could not resolve class $classname');
+			} else {
+				// Bind using the alias (custom name or last path segment)
+				adddvar(script, alias, cls);
+			}
+		}
+	}
+
+
     public static function __default_stuff(script:HaxeScript):Void {   
        
          script.interpreter.variables["Cool"] = {
@@ -100,26 +170,45 @@ class HaxeScript {
             }
         }; 
 
-        adddvar(script,"import", function(path:String, id:Null<String> = null) {
-            var cls:Dynamic = Type.resolveClass(path);
-            if(cls == null) {
-                Sys.println("[ Warning ] class " + path + " could not be resolved!");
-                return;
-            }
-
-            if(id != null) 
-                adddvar(script, id, cls);
-            else {
-                var className:String = path.substring(path.lastIndexOf('.') + 1, path.length);
-                //Sys.println("[ Hscript ] importing class " + className);
-                adddvar(script, className, cls);
-            }
+        registerImports(script,imports);	
+		adddvar(script, "addBehindDad", function(obj:Dynamic) {
+            if (isInPlayState())
+                PlayState.instance.addBehindDad(obj);
+            else
+                trace("addBehindDad called outside PlayState — ignoring");
         });
-		
+		adddvar(script, "addBehindGF", function(obj:Dynamic) {
+            if (isInPlayState())
+                PlayState.instance.addBehindGF(obj);
+            else
+                trace("addBehindGF called outside PlayState — ignoring");
+        });
+
+        adddvar(script, "addBehindBF", function(obj:Dynamic) {
+            if (isInPlayState())
+                PlayState.instance.addBehindBF(obj);
+            else
+                trace("addBehindBF called outside PlayState — ignoring");
+        });
+
+        adddvar(script, "addToStageBackground", function(obj:Dynamic) {
+            if (isInPlayState())
+                PlayState.instance.addToStageBackground(obj);
+            else
+                trace("addToStageBackground called outside PlayState — ignoring");
+        });
+
+        adddvar(script, "addToStageForeground", function(obj:Dynamic) {
+            if (isInPlayState())
+                PlayState.instance.addToStageForeground(obj);
+            else
+                trace("addToStageForeground called outside PlayState — ignoring");
+        });	
         adddvar(script,"controls",function(){ return Controls;});
+		adddvar(script,"FlxTextFormat", flixel.text.FlxText.FlxTextFormat);
+		adddvar(script,"FlxTextFormatMarkerPair", flixel.text.FlxText.FlxTextFormatMarkerPair);
         adddvar(script,"this", script.obj);
-		adddvar(script,"ScriptedFlxGroup", ScriptedFlxGroup);
-		
+		adddvar(script, "FlxGroup", flixel.group.FlxGroup);
         adddvar(script, "Std", Std);
         adddvar(script,"FlxG", FlxG);
         adddvar(script,"FlxSprite", flixel.FlxSprite);
@@ -127,7 +216,9 @@ class HaxeScript {
         adddvar(script,"FlxRuntimeShader", flixel.addons.display.FlxRuntimeShader);
         adddvar(script,"Note", Note);
         adddvar(script,"ClientPrefs", ClientPrefs);
+		adddvar(script, "VideoSprite", objects.VideoSprite);
         adddvar(script,"easeFromString", getFlxEaseByString);
+		adddvar(script,"FlxSpriteGroup", flixel.group.FlxSpriteGroup);
         adddvar(script,"colorFromString", FlxColor.fromString);
         adddvar(script,"praseIntfromString",  function(number:String) {
             
@@ -139,10 +230,21 @@ class HaxeScript {
             return Std.parseFloat(number);
             
         });
-        adddvar(script,"PlayState", PlayState.instance);
+		if (isInPlayState()){
+			adddvar(script,"PlayState", PlayState.instance);
+
+		}
+		
+
         adddvar(script,"BGSprite", BGSprite);
         adddvar(script,"Math", Math);
+		 adddvar(script,"DropShadowShader", shaders.DropShadowShader);
+		adddvar(script,"stringContains", StringTools.contains);
+		adddvar(script,"ScriptedSubState", ScriptableMusicBeatSubState);
         adddvar(script, 'persistantvariables', ScriptedStatehandler.persistantvariables);
+		 adddvar (script, 'keyToString', function(key:FlxKey) {
+            return Std.string(FlxKey.toStringMap.get(key));
+		});
 
         adddvar(script,"FlxBackdrop",FlxBackdrop);
         //Tween shit, but for strums.. this shit isnt  static in lua shit so we just adding it here so we can easily use it
@@ -161,14 +263,27 @@ class HaxeScript {
 			}
 		});
 
-        adddvar(script, "ScriptedFlxSprite",  ScriptedFlxSprite);
-
+		adddvar(script, "Stringhelper", Stringhelper);
+        adddvar(script, "ScriptedFunkinSprite",  ScriptedFunkinSprite);
+		adddvar(script, "setFormat", Texthandler.setFormat);
+		adddvar(script, "applyMarkup", Texthandler.applyMarkup);
         adddvar(script, "switchscriptedstate",  function(name:String){
             MusicBeatState.switchscriptedstate(name);
         });
         adddvar(script, "switchState",  function(name:FlxState){
             MusicBeatState.switchState(name);
         });
+		adddvar(script,'FlxTextAlign',{
+			LEFT: FlxTextAlign.LEFT,
+			RIGHT: FlxTextAlign.RIGHT,
+			CENTER: FlxTextAlign.CENTER
+		});
+        adddvar(script,'FlxTextBorderStyle',{
+			NONE: FlxTextBorderStyle.NONE,
+			SHADOW: FlxTextBorderStyle.SHADOW,
+            OUTLINE: FlxTextBorderStyle.OUTLINE,
+            OUTLINE_FAST: FlxTextBorderStyle.OUTLINE_FAST
+		});
         adddvar(script,'BlendMode',{
 			SUBTRACT: BlendMode.SUBTRACT,
 			ADD: BlendMode.ADD,
@@ -196,6 +311,8 @@ class HaxeScript {
 				}));
 			}
 		});
+
+		adddvar(script,'FlxColor',Flxcolorscript);
 		adddvar(script, "noteTweenAngle", function(tag:String, note:Int, value:Dynamic, duration:Float, ease:String) {
 			cancelTween(tag);
 			if(note < 0) note = 0;
@@ -271,6 +388,9 @@ class HaxeScript {
 			case _: return FlxEase.linear;
 		}
 	}
+	public static inline function isInPlayState():Bool {
+    return FlxG.state != null && Type.getClass(FlxG.state) == PlayState;
+}
 
 
     static function cancelTween(tag:String) {
@@ -382,6 +502,44 @@ class HaxeScript {
     }
 } 
 
+class Texthandler{
+
+
+    /**
+     * Passthrough for setFormat on the underlying text object.
+     * Accepts all arguments and forwards them.
+     */
+    public static function setFormat(text: FlxText, font:String, size:Int, color:Int = 0xFFFFFF, align:FlxTextAlign = FlxTextAlign.CENTER, borderStyle:FlxTextBorderStyle = NONE, borderColor:Int = 0x000000) {
+      
+        text.setFormat(font, size, color, align, borderStyle, borderColor);
+        
+    }
+    public static function applyMarkup(text: FlxText, input:String, rules:Array<FlxTextFormatMarkerPair>) {
+      
+        text.applyMarkup(input, rules);
+        
+    }
+
+
+    // Add more passthroughs as needed, e.g. setBorder, setText, etc.
+
+}
+
+class Stringhelper{
+
+    public static function substring(str:String, start:Int, end:Int):String {
+        trace(str.substring(start, end));
+        return str.substring(start, end);
+    }
+    public static function getLength(str:String):Int {
+        return str.length;
+    }
+	public static function replacestringwith(str:String, check:String, replace:String):String {
+       
+        return str.replace(check, replace);
+    }
+}
+
 class ModchartSprite extends FlxSprite
 {
 	public var wasAdded:Bool = false;
@@ -408,52 +566,30 @@ class ModchartText extends FlxText
 	}
 }
 
-class ScriptedFlxGroup {
-    public var group:FlxTypedGroup<Dynamic>;
+//flxcolor passthrough
+class Flxcolorscript {
+	public static var BLACK:Int = FlxColor.BLACK;
+	public static var BLUE:Int = FlxColor.BLUE;
+	public static var CYAN:Int = FlxColor.CYAN;
+	public static var GRAY:Int = FlxColor.GRAY;
+	public static var GREEN:Int = FlxColor.GREEN;
+	public static var LIME:Int = FlxColor.LIME;
+	public static var MAGENTA:Int = FlxColor.MAGENTA;
+	public static var ORANGE:Int = FlxColor.ORANGE;
+	public static var PINK:Int = FlxColor.PINK;
+	public static var PURPLE:Int = FlxColor.PURPLE;
+	public static var RED:Int = FlxColor.RED;
+	public static var TRANSPARENT:Int = FlxColor.TRANSPARENT;
+	public static var WHITE:Int = FlxColor.WHITE;
+	public static var YELLOW:Int = FlxColor.YELLOW;
 
-    public function new(maxsize:Int = 0) {
-        group = new FlxTypedGroup<Dynamic>(maxsize);
-    }
-
-    public function addtogroup(obj:FlxBasic) {
-        group.add(obj);
-    }
-
-    public function removefromgroup(obj:FlxBasic, splice:Bool = false) {
-        group.remove(obj, splice);
-    }
-
-    public function clear() {
-        group.clear();
-    }
-
-    public function length():Int {
-        return group.length;
-    }
-
-    public function getmembers():Array<Dynamic> {
-        return group.members;
-    }
-
-    public function get(index:Int):Dynamic {
-        return group.members[index];
-    }
-
-	 public function setcam(cam:FlxCamera){
-       group.cameras = [cam];
-    }
-
-    public function exists(obj:FlxBasic):Bool {
-        return group.members.indexOf(obj) != -1;
-    }
-
-	public function addtostate(playstate:Bool){
-		
-		if(playstate){
-			PlayState.instance.add(group);
-		}
-		else{
-			FlxG.state.add(group);
-		}
-	}
+	public static function fromCMYK(cyan:Float,magenta:Float,yellow:Float,black:Float,alpha:Float = 1):Int return FlxColor.fromCMYK(cyan,magenta,yellow,black,alpha);
+	public static function fromHSB(hue:Float,saturation:Float,brightness:Float,alpha:Float = 1):Int return FlxColor.fromHSB(hue,saturation,brightness,alpha);
+	public static function fromInt(num:Int):Int return cast FlxColor.fromInt(num);
+	public static function fromRGBFloat(red:Float,green:Float,blue:Float,alpha:Float = 1):Int return FlxColor.fromRGBFloat(red,green,blue,alpha);
+	public static function fromRGB(red:Int,green:Int,blue:Int,alpha:Int = 255):Int return FlxColor.fromRGB(red,green,blue,alpha);
+	public static function getHSBColorWheel(alpha:Int = 255):Array<Int> return cast FlxColor.getHSBColorWheel(alpha);
+	public static function gradient(color1:FlxColor, color2:FlxColor, steps:Int, ?ease:Float->Float):Array<Int> return FlxColor.gradient(color1,color2,steps,ease);
+	public static function interpolate(color1:FlxColor, color2:FlxColor, factor:Float = 0.5):Int return FlxColor.interpolate(color1,color2,factor);
+	public static function fromString(string:String):Int return FlxColor.fromString(string);
 }

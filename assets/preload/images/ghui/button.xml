@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="button.png">
+	<!-- Created with Adobe Animate version 18.0.1.115 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="ButtonBG0000" x="4" y="4" width="21" height="24" frameX="-302" frameY="-47" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0001" x="29" y="4" width="59" height="56" frameX="-278" frameY="-41" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0002" x="92" y="4" width="68" height="72" frameX="-269" frameY="-32" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0003" x="164" y="4" width="74" height="82" frameX="-263" frameY="-25" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0004" x="242" y="4" width="85" height="89" frameX="-259" frameY="-19" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0005" x="331" y="4" width="93" height="91" frameX="-257" frameY="-16" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0006" x="428" y="4" width="99" height="94" frameX="-256" frameY="-13" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0007" x="531" y="4" width="103" height="95" frameX="-255" frameY="-11" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0008" x="638" y="4" width="106" height="96" frameX="-255" frameY="-9" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0009" x="748" y="4" width="108" height="96" frameX="-255" frameY="-9" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0010" x="860" y="4" width="109" height="96" frameX="-255" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0011" x="4" y="104" width="333" height="96" frameX="-32" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0012" x="341" y="104" width="333" height="97" frameX="-32" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0013" x="678" y="104" width="333" height="99" frameX="-32" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0014" x="4" y="207" width="333" height="102" frameX="-32" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0015" x="341" y="207" width="331" height="105" frameX="-32" frameY="-9" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0016" x="676" y="207" width="328" height="108" frameX="-32" frameY="-11" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0017" x="4" y="319" width="325" height="109" frameX="-32" frameY="-15" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0018" x="333" y="319" width="317" height="108" frameX="-32" frameY="-21" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0019" x="654" y="319" width="312" height="109" frameX="-32" frameY="-22" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0020" x="4" y="432" width="312" height="107" frameX="-32" frameY="-22" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0021" x="320" y="432" width="312" height="109" frameX="-32" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0022" x="636" y="432" width="312" height="105" frameX="-32" frameY="-5" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0023" x="4" y="545" width="312" height="108" frameX="-32" frameY="-4" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0024" x="320" y="545" width="312" height="104" frameX="-32" frameY="-20" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0025" x="636" y="545" width="312" height="106" frameX="-32" frameY="-2" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0026" x="4" y="657" width="312" height="101" frameX="-32" frameY="0" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0027" x="320" y="657" width="312" height="109" frameX="-32" frameY="-5" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0028" x="636" y="657" width="312" height="107" frameX="-32" frameY="-13" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0029" x="4" y="770" width="316" height="101" frameX="-28" frameY="-21" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0030" x="324" y="770" width="327" height="100" frameX="-17" frameY="-22" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0031" x="655" y="770" width="334" height="104" frameX="-10" frameY="-17" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0032" x="4" y="878" width="338" height="107" frameX="-6" frameY="-12" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0033" x="346" y="878" width="341" height="108" frameX="-3" frameY="-10" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0034" x="4" y="990" width="343" height="109" frameX="-1" frameY="-8" frameWidth="365" frameHeight="131"/>
+	<SubTexture name="ButtonBG0035" x="351" y="990" width="344" height="110" frameX="0" frameY="-7" frameWidth="365" frameHeight="131"/>
+</TextureAtlas>

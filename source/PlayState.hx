@@ -19,6 +19,7 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
+import flixel.effects.FlxFlicker;
 import flixel.sound.FlxSound;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
@@ -28,6 +29,7 @@ import flixel.util.FlxColor;
 import flixel.util.FlxSort;
 import flixel.util.FlxStringUtil;
 import flixel.util.FlxTimer;
+
 import openfl.utils.Assets as OpenFlAssets;
 import editors.ChartingState;
 import editors.CharacterEditorState;
@@ -48,17 +50,7 @@ import openfl.filters.ShaderFilter;
 import sys.FileSystem;
 import sys.io.File;
 #end
-#if VIDEOS_ALLOWED
-#if (hxCodec >= "3.0.0")
-import hxcodec.flixel.FlxVideo as VideoPlayer;
-#elseif (hxCodec >= "2.6.1")
-import hxcodec.VideoHandler as VideoPlayer;
-#elseif (hxCodec == "2.6.0")
-import VideoPlayer;
-#else
-import vlc.MP4Handler as VideoPlayer;
-#end
-#end
+import objects.VideoSprite;
 using StringTools;
 
 class PlayState extends MusicBeatState
@@ -158,6 +150,7 @@ class PlayState extends MusicBeatState
 
 	public var gfSpeed:Int = 1;
 	public var health:Float = 1;
+	public var hp:Float = 4;
 	public var combo:Int = 0;
 
 	public var stagescript:HaxeScript;
@@ -278,6 +271,11 @@ class PlayState extends MusicBeatState
 
 	public var defaultCamZoom:Float = 1.05;
 
+
+	public var notemissed:Bool =false;
+	
+ 	// shamelessly stolen from pico thank u ericc
+  	var iconFlicker:FlxFlicker = null;
 	// how big to stretch the pixel art assets
 	public static var daPixelZoom:Float = 6;
 
@@ -1097,6 +1095,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 
 		iconP1 = new HealthIcon(boyfriend.healthIcon, true);
 		iconP1.y = hud.healthBar.y - 75;
+		iconP1.flipX= true;
 		if(hud.iconp1overide !=null){
 			iconP1.x =  hud.healthBar.x + hud.geticonP1Pos(0);
 			iconP1.y +=  hud.healthBar.y + hud.geticonP1Pos(1);
@@ -1107,7 +1106,6 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		}
 		iconP1.visible = !ClientPrefs.data.hideHud;
 		iconP1.alpha = ClientPrefs.data.healthBarAlpha;
-	
 		iconP1.visible = hud.iconp1vis;
 		uiGroup.add(iconP1);
 
@@ -1122,7 +1120,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 			iconP2.y = hud.healthBar.y - 75;
 		}
 		
-		iconP2.visible = !ClientPrefs.data.hideHud;
+		iconP2.visible = hud.iconp2vis;
 		iconP2.alpha = ClientPrefs.data.healthBarAlpha;
 		uiGroup.add(iconP2);
 		hud.reloadHealthBarColors();
@@ -1331,13 +1329,39 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 					tankIntro();
 
 				default:
-					startCountdown();
+					var ret:Dynamic;
+					var func:Dynamic = null;
+					for (script in hscriptArray ){
+						func = script.interpreter.variables.get("PreSongCutsceen");
+						
+					}
+					if (func == null){
+							startCountdown();
+						}
+					else{
+						ret = cast Reflect.callMethod(null, func, [isStoryMode]);
+						
+						
+					}
 			}
 			seenCutscene = true;
 		}
 		else
 		{
-			startCountdown();
+			var ret:Dynamic;
+			var func:Dynamic = null;
+			for (script in hscriptArray ){
+				func = script.interpreter.variables.get("PreSongCutsceen");
+				
+			}
+			if (func == null){
+					startCountdown();
+				}
+			else{
+				ret = cast Reflect.callMethod(null, func, [isStoryMode]);
+				
+				
+			}
 		}
 		RecalculateRating();
 
@@ -1514,35 +1538,63 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		char.y += char.positionArray[1];
 	}
 
-	public function startVideo(name:String)
+	public var videoCutscene:VideoSprite = null;
+	public function startVideo(name:String, forMidSong:Bool = false, canSkip:Bool = true, loop:Bool = false, playOnLoad:Bool = true)
 	{
 		#if VIDEOS_ALLOWED
-		inCutscene = true;
+		inCutscene = !forMidSong;
+		canPause = forMidSong;
 
-		var filepath:String = Paths.video(name);
+		var foundFile:Bool = false;
+		var fileName:String = Paths.video(name);
+
 		#if sys
-		if (!FileSystem.exists(filepath))
+		if (FileSystem.exists(fileName))
 		#else
-		if (!OpenFlAssets.exists(filepath))
+		if (OpenFlAssets.exists(fileName))
 		#end
-		{
-			FlxG.log.warn('Couldnt find video file: ' + name);
-			startAndEnd();
-			return;
-		}
+		foundFile = true;
 
-		var video:VideoPlayer = new VideoPlayer();
-		video.playVideo(filepath);
-		video.finishCallback = function()
+		if (foundFile)
 		{
-			startAndEnd();
-			return;
+			videoCutscene = new VideoSprite(fileName, forMidSong, canSkip, loop);
+			if(forMidSong) videoCutscene.videoSprite.bitmap.rate = playbackRate;
+
+			// Finish callback
+			if (!forMidSong)
+			{
+				function onVideoEnd()
+				{
+					if (!isDead && generatedMusic && PlayState.SONG.notes[Std.int(curStep / 16)] != null && !endingSong && !isCameraOnForcedPos)
+					{
+						moveCameraSection();
+						FlxG.camera.snapToTarget();
+					}
+					videoCutscene = null;
+					canPause = true;
+					inCutscene = false;
+					startAndEnd();
+				}
+				videoCutscene.finishCallback = onVideoEnd;
+				videoCutscene.onSkip = onVideoEnd;
+			}
+			if (GameOverSubstate.instance != null && isDead) GameOverSubstate.instance.add(videoCutscene);
+			else add(videoCutscene);
+
+			if (playOnLoad)
+				videoCutscene.play();
+			return videoCutscene;
 		}
+		#if (LUA_ALLOWED || HSCRIPT_ALLOWED)
+		else addTextToDebug("Video not found: " + fileName, FlxColor.RED);
+		#else
+		else FlxG.log.error("Video not found: " + fileName);
+		#end
 		#else
 		FlxG.log.warn('Platform not supported!');
 		startAndEnd();
-		return;
 		#end
+		return null;
 	}
 
 	function startAndEnd()
@@ -2236,24 +2288,44 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 			--i;
 		}
 	}
-	public function songtime(song:String){
-
-
-		switch(song){
-			default:
-				//trace(Conductor.stepLengthMs * 4 / 1000); 
-				return Conductor.stepLengthMs * 4 / 1000;
+	public function songtime(song:String):Dynamic{
+		var ret:Dynamic;
+		var func:Dynamic = null;
+		for (script in hscriptArray ){
+			func = script.interpreter.variables.get("songtime");
 			
-		
+			
 		}
+		if (func == null){
+				return Conductor.stepLengthMs * 4 / 1000;
+			}
+			else{
+				ret = cast Reflect.callMethod(null, func, []);
+				return ret;
+			}
 	}
 
 
-	public function songEase(song:String){
-		switch(song){
-			default: 
-				return FlxEase.smoothStepInOut;
+	public function songEase(song:String):Dynamic{
+		var ret:Dynamic;
+		var func:Dynamic = null;
+		for (script in hscriptArray ){
+			func = script.interpreter.variables.get("songEase");
+			
 		}
+		if (func == null){
+				return FlxEase.smoothStepInOut;
+				trace('func is null');
+			}
+		else{
+			ret = cast Reflect.callMethod(null, func, []);
+			trace('overidding cammove with ' + ret);
+			return ret;
+			
+		}
+		
+		
+		
 	}
 
 	public dynamic function updateScore(miss:Bool = false)
@@ -2877,7 +2949,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 	override public function onFocus():Void
 	{
 		#if desktop
-		if (health > 0 && !paused)
+		if (hp > 0 && !paused)
 		{
 			if (Conductor.songPosition > 0.0)
 			{
@@ -2902,7 +2974,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 	override public function onFocusLost():Void
 	{
 		#if desktop
-		if (health > 0 && !paused)
+		if (hp > 0 && !paused)
 		{
 			DiscordClient.changePresence(detailsPausedText, SONG.song + " (" + storyDifficultyText + ")", iconP2.getCharacter());
 		}
@@ -3179,6 +3251,9 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 
 
 
+		if(hp >4){
+			hp =4; //posible supercharge mechanic cango here
+		}
 		if (health > 2)
 			health = 2;
 
@@ -3256,6 +3331,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		if (!ClientPrefs.data.noReset && controls.RESET && canReset && !inCutscene && startedCountdown && !endingSong)
 		{
 			health = 0;
+			hp = 0;
 			trace("RESET = True");
 		}
 		doDeathCheck();
@@ -3490,7 +3566,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 
 	function doDeathCheck(?skipHealthCheck:Bool = false)
 	{
-		if (((skipHealthCheck && instakillOnMiss) || health <= 0) && !practiceMode && !isDead)
+		if (((skipHealthCheck && instakillOnMiss) || hp <= 0) && !practiceMode && !isDead)
 		{
 			var ret:Dynamic = false;
 			for (script in hscriptArray ){
@@ -4722,6 +4798,20 @@ public function moveCamera(isDad:Bool,? isGf:Bool)
 			}
 		});
 		combo = 0;
+
+		if(!notemissed){
+			hp -=1;
+			notemissed = true; //Conductor.stepCrochet * 8 / 1000 
+			trace(Conductor.stepCrochet * 12 / 200);
+			iconFlicker = FlxFlicker.flicker(iconP1,(Conductor.stepCrochet * 12 / 200)  , 1 / 10, true,true, function(flicker:FlxFlicker):Void
+            {
+                notemissed = false;
+				iconFlicker = null;
+				trace('flickerdone');
+            });
+
+		}
+
 		health -= daNote.missHealth * healthLoss;
 
 		if (instakillOnMiss)

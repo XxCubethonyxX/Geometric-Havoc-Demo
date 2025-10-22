@@ -43,24 +43,19 @@ class HealthIcon extends FlxSprite
 				scale.set(mult, mult);
 				updateHitbox();
 				switch (isPlayer){
-				case(true):
-					updateAnim(PlayState.instance.hud.healthBar.percent);
-					if(PlayState.instance.hud.iconp1overide ==null){
-						x = PlayState.instance.hud.healthBar.x+ (PlayState.instance.hud.healthBar.width * (FlxMath.remapToRange(PlayState.instance.hud.healthBar.percent, 0, 100, 100, 0) * 0.01))+ (150 * scale.x - 150) / 2- iconOffset;
-						}
-				case(false):
-					updateAnim(100 - PlayState.instance.hud.healthBar.percent);
-					if(PlayState.instance.hud.iconp2overide ==null){
-						x = PlayState.instance.hud.healthBar.x+ (PlayState.instance.hud.healthBar.width * (FlxMath.remapToRange(PlayState.instance.hud.healthBar.percent, 0, 100, 100, 0) * 0.01))- (150 * scale.x) / 2- iconOffset * 2;
-				
-				}
+					case(true):
+						updateAnim(PlayState.instance.hp);
+						
+					case(false):
+						updateAnim(4 - PlayState.instance.hp);
 					
 				
+				}				
 		}
 			}
 		}
 		
-	}
+	
 
 	public function swapOldIcon() {
 		if(isOldIcon = !isOldIcon) changeIcon('bf-old');
@@ -87,10 +82,10 @@ class HealthIcon extends FlxSprite
 					loadGraphic(file, true, Math.floor(width / 3), Math.floor(height)); //starting the winning icon stuffs
 					icontype = 'win';
 					trace('win');
-				case (750):
-					loadGraphic(file, true, Math.floor(width / 5), Math.floor(height)); //starting the winning icon stuffs
-					icontype = 'supperpiss';
-					trace('supperpiss');
+				case (618):
+					loadGraphic(file, true, Math.floor(width / 4), Math.floor(height)); //starting the winning icon stuffs
+					icontype = 'jsab';
+
 				
 
 			}
@@ -108,13 +103,12 @@ class HealthIcon extends FlxSprite
 					iconOffsets[1] = (width - 150) / 3;
 					iconOffsets[2] = (width - 150) / 3;
 					animation.add(char, [0, 1, 2], 0, false, isPlayer);
-				case ('supperpiss'):
-					iconOffsets[0] = (width - 150) / 5;
-					iconOffsets[1] = (width - 150) / 5;
-					iconOffsets[2] = (width - 150) / 5;
-					iconOffsets[3] = (width - 150) / 5;
-					iconOffsets[4] = (width - 150) / 5;
-					animation.add(char, [0, 1, 2, 3, 4], 0, false, isPlayer);
+				case ('jsab'):
+					iconOffsets[0] = (width - 150) / 4;
+					iconOffsets[1] = (width - 150) / 4;
+					iconOffsets[2] = (width - 150) / 4;
+					iconOffsets[3] = (width - 150) / 4;
+					animation.add(char, [0, 1, 2, 3], 0, false, isPlayer);
 			}
 			updateHitbox();
 
@@ -170,15 +164,25 @@ class HealthIcon extends FlxSprite
 						animation.curAnim.curFrame = 0;
 				case('supperpiss'):
 					animation.curAnim.curFrame = 4 - num;
+				case('jsab'):
+				
+					switch(health){
+						case(1):
+							animation.curAnim.curFrame = 3;
+							
+						case(2):
+							animation.curAnim.curFrame = 2;
+							
+						case(3):
+							animation.curAnim.curFrame = 1;
+						
+						case(4):
+							animation.curAnim.curFrame = 0;
+						
+					}
+				
+			}
 
 		}
-		
-				
-
-	
-				
-
-	}
-
 	}
 }
