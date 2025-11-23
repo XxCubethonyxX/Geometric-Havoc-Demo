@@ -108,7 +108,7 @@ class HudHandler extends FlxGroup{
             if(bars.healthbar.barStyle == 'png'){
                 
                 
-                healthBar = new Bar(-200, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11),bars.healthbar.barStyle, gethealthbargraphics(1), function() return PlayState.instance.health, 0, 2);
+                healthBar = new Bar(-200, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11),bars.healthbar.barStyle, gethealthbargraphics(1), function() return PlayState.instance.energy, 0, 2);
                 healthBar.leftToRight = false;
                 healthBar.scrollFactor.set();
                 healthBar.x += bars.healthbar.barOffsets[0];
@@ -130,7 +130,7 @@ class HudHandler extends FlxGroup{
             }
             else{
                 
-                healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11),bars.healthbar.barStyle, gethealthbargraphics(0), function() return PlayState.instance.health, 0, 2);
+                healthBar = new Bar(0, FlxG.height * (!ClientPrefs.data.downScroll ? 0.89 : 0.11),bars.healthbar.barStyle, gethealthbargraphics(0), function() return PlayState.instance.energy, 0, 2);
                 healthBar.screenCenter(X);
                 healthBar.leftToRight = false;
                 healthBar.scrollFactor.set();

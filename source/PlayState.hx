@@ -149,7 +149,7 @@ class PlayState extends MusicBeatState
 	private var curSong:String = "";
 
 	public var gfSpeed:Int = 1;
-	public var health:Float = 1;
+	public var energy:Float = 1;
 	public var hp:Float = 4;
 	public var combo:Int = 0;
 
@@ -193,7 +193,7 @@ class PlayState extends MusicBeatState
    * The displayed value of the player's health.
    * Used to provide smooth animations based on linear interpolation of the player's health.
    */
-  	var healthLerp:Float = 1;
+  	var energyLerp:Float = 1;
 	var songLerp:Float = 0;
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
@@ -2235,7 +2235,14 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 	{
 		insert(members.indexOf(gfGroup), obj);
 	}
-
+	public function addInFrontOfGF(obj:FlxObject)
+	{
+		var gfIndex = members.indexOf(gfGroup);
+		if (gfIndex != -1)
+			insert(gfIndex + 1, obj);
+		else
+			add(obj); // fallback if gfGroup not found
+	}
 	public function addBehindBF(obj:FlxObject)
 	{
 		insert(members.indexOf(boyfriendGroup), obj);
@@ -3013,7 +3020,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
   function updateHealth():Void
   {
    
-      healthLerp = FlxMath.lerp(healthLerp, health, 0.15);
+      energyLerp = MathUtil.lerpDelta(energyLerp, energy, 0.0075, FlxG.elapsed);
     
   }
 
@@ -3040,7 +3047,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		}
 		setFunctionOnScripts('onUpdate', [elapsed]);
 		updateHealth();
-		hud.updatehealth(healthLerp);
+		hud.updatehealth(energy);
 		hud.updateTime(songPercent);
 
 		switch (curStage)
@@ -3254,8 +3261,8 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		if(hp >4){
 			hp =4; //posible supercharge mechanic cango here
 		}
-		if (health > 2)
-			health = 2;
+		if (energy > 2)
+			energy = 2;
 
 
 		if (FlxG.keys.anyJustPressed(debugKeysCharacter) && !endingSong && !inCutscene)
@@ -3330,7 +3337,7 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		// RESET = Quick Game Over Screen
 		if (!ClientPrefs.data.noReset && controls.RESET && canReset && !inCutscene && startedCountdown && !endingSong)
 		{
-			health = 0;
+	
 			hp = 0;
 			trace("RESET = True");
 		}
@@ -4096,10 +4103,10 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 		
 	}
 
-	function moveCameraSection():Void
-	{
-		if (SONG.notes[curSection] == null)
-			return;
+	function moveCameraSection():Void {
+		if(SONG.notes[curSection] == null) return;
+
+		var focous:String = '';
 
 		if (gf != null && SONG.notes[curSection].gfSection)
 		{
@@ -4107,21 +4114,22 @@ hud = new HudHandler(PlayState.SONG.hudSkin, PlayState.SONG.hudSkin, SONG.song);
 			camFollow.x += gf.cameraPosition[0] + girlfriendCameraOffset[0];
 			camFollow.y += gf.cameraPosition[1] + girlfriendCameraOffset[1];
 			tweenCamIn();
-			setFunctionOnScripts('onMoveCamera', ['gf']);
+			focous = 'gf';
+			
 			return;
 		}
 
 		if (!SONG.notes[curSection].mustHitSection)
 		{
 			moveCamera(true);
-			setFunctionOnScripts('onMoveCamera', ['dad']);
+			focous = 'dad';
 		}
 		else
 		{
 			moveCamera(false);
-			
-			setFunctionOnScripts('onMoveCamera', ['boyfriend']);
+			focous = 'boyfriend';
 		}
+		setFunctionOnScripts('onMoveCamera', [focous]);
 	}
 
 	var cameraTwn:FlxTween;
@@ -4226,14 +4234,14 @@ public function moveCamera(isDad:Bool,? isGf:Bool)
 			{
 				if (daNote.strumTime < songLength - Conductor.safeZoneOffset)
 				{
-					health -= 0.05 * healthLoss;
+					energy -= 0.05 * healthLoss;
 				}
 			});
 			for (daNote in unspawnNotes)
 			{
 				if (daNote.strumTime < songLength - Conductor.safeZoneOffset)
 				{
-					health -= 0.05 * healthLoss;
+					energy -= 0.05 * healthLoss;
 				}
 			}
 
@@ -4812,7 +4820,7 @@ public function moveCamera(isDad:Bool,? isGf:Bool)
 
 		}
 
-		health -= daNote.missHealth * healthLoss;
+		energy -= daNote.missHealth * healthLoss;
 
 		if (instakillOnMiss)
 		{
@@ -4851,7 +4859,7 @@ public function moveCamera(isDad:Bool,? isGf:Bool)
 
 		if (!boyfriend.stunned)
 		{
-			health -= 0.05 * healthLoss;
+			energy -= 0.05 * healthLoss;
 			if (instakillOnMiss)
 			{
 				vocals.volume = 0;
@@ -5032,7 +5040,7 @@ public function moveCamera(isDad:Bool,? isGf:Bool)
 			if (combo > 9999)
 				combo = 9999;
 			popUpScore(note);
-			health += note.hitHealth * healthGain;
+			energy += note.hitHealth * healthGain;
 			invalidateNote(note);
 		}
 	}

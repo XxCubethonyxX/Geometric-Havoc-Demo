@@ -26,10 +26,22 @@ class GHWarning extends MusicBeatState
 
 	override function create()
 	{
+
+
+		
 	
 		if (FlxG.save.data.weekCompleted != null)
 			StoryMenuState.weekCompleted = FlxG.save.data.weekCompleted;
 
+		if(FlxG.save.data.seenintro){
+			video();
+			FlxG.mouse.visible = false;
+
+			Cursor.show();
+
+			super.create();
+			return;
+		}
 		FlxG.mouse.visible = false;
 
 		Cursor.show();
@@ -68,6 +80,7 @@ class GHWarning extends MusicBeatState
 		enable = new GHButton(0, 500, 'Enable', 1.0, () ->
 		{
 			ClientPrefs.data.flashing = true;
+			FlxG.save.data.seenintro = true;
 			enable.canClick = false;
 			enable.disappear();
 			disable.disappear();
@@ -79,6 +92,7 @@ class GHWarning extends MusicBeatState
 		disable = new GHButton(0, 500, 'Disable', 1.0, () ->
 		{
 			ClientPrefs.data.flashing = false;
+			FlxG.save.data.seenintro = true;
 			enable.canClick = false;
 			enable.disappear();
 			disable.disappear();
@@ -113,19 +127,23 @@ class GHWarning extends MusicBeatState
 					{
 						new FlxTimer().start(3, function(tmr:FlxTimer)
 						{
-							var filepath:String = Paths.video(ClientPrefs.data.flashing ? 'splash_flash' : 'splash_noflash');
-							var video = new objects.VideoSprite(filepath, true, false, false);
-							video.finishCallback = function()
-							{
-								MusicBeatState.switchState(new GHTitle());
-							}
-							add(video);
-							video.play();
+							video();
 						});
 					}
 				});
 			});
 		}
+	}
+
+	function video(){
+		var filepath:String = Paths.video(ClientPrefs.data.flashing ? 'splash_flash' : 'splash_noflash');
+		var video = new objects.VideoSprite(filepath, true, false, false);
+		video.finishCallback = function()
+		{
+			MusicBeatState.switchState(new GHTitle());
+		}
+		add(video);
+		video.play();
 	}
 
 	function getOut():Void
@@ -137,16 +155,24 @@ class GHWarning extends MusicBeatState
 	{
 		super.update(elapsed);
 
-		if (FlxG.mouse.overlaps(disable)|| FlxG.mouse.overlaps(enable)){
-			Cursor.set_cursorMode(Pointer);
-		}
-		else{
-			Cursor.set_cursorMode(Default);
-		}
+
+
+
+		if(FlxG.save.data.seenintro ==false||FlxG.save.data.seenintro ==null){
+			if (FlxG.mouse.overlaps(disable)|| FlxG.mouse.overlaps(enable)){
+				Cursor.set_cursorMode(Pointer);
+			}
+			else{
+				Cursor.set_cursorMode(Default);
+			}
+
+		
+		
 
 		for (i in emitter.members)
 		{
 			i.alpha = 0.25 * (1 - i.percent);
 		}
+	}
 	}
 }
